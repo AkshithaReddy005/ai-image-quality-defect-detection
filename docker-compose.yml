@@ -1,0 +1,43 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: imageqa-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - imageqa_data:/app/data
+      - imageqa_models:/app/ml/models
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:////app/data/quality.db
+      - UPLOAD_DIR=/app/data/uploads
+      - HEATMAP_DIR=/app/data/heatmaps
+      - MODEL_DIR=/app/ml/models
+      - DEBUG=false
+      - CORS_ORIGINS=["http://localhost:3000","http://localhost:80","http://frontend"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: imageqa-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  imageqa_data:
+  imageqa_models:

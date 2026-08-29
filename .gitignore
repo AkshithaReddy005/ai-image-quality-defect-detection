@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+
+# Data & generated files (large files excluded from git)
+backend/data/
+backend/ml/models/*.pkl
+backend/sample_images/
+
+# But keep evaluation reports
+!backend/ml/models/evaluation_report.txt
+!backend/ml/models/full_evaluation.json
+
+# Environment
+.env
+*.env
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Docker volumes
+data/
+
+# Pytest
+.pytest_cache/
+htmlcov/
+.coverage

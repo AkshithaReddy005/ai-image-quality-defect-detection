@@ -40,6 +40,15 @@ A full-stack application that accepts an image and automatically evaluates its v
 
 ---
 
+## 🛡️ Production Security & Hardware Defense Layers
+
+To ensure stability under concurrent enterprise conditions or edge smart-city network environments, the FastAPI ingestion engine enforces two production-grade security boundaries:
+
+1. **API Ingestion Security (Magic Bytes Validation):** Rather than blindly trust file extensions (e.g., `.jpg`), the API intercepts the first 2048 bytes of the upload stream to verify true binary file headers (`\xff\xd8\xff` for JPEG; `\x89PNG` for PNG). Extension spoofing or corrupt payloads are rejected immediately with an HTTP 400 Bad Request error.
+2. **RAM & CPU Protection Layer:** To prevent Out-Of-Memory (OOM) daemon terminations when handling ultra-high-resolution or megapixel imagery, an automatic 1920px max-dimension downscaling filter is applied during initial OpenCV buffer decoding. This guarantees bounded memory ceilings across parallel feature extraction inference loops.
+
+---
+
 ## Architecture
 
 ```
@@ -87,14 +96,14 @@ The system uses a **hybrid approach** combining classical computer vision with m
    - Score 25–50 → DEGRADED
    - Score < 25 → DEFECTIVE
 
-4. **Training Data**: Synthetic degradations of procedurally generated seed images
-   - Gaussian blur (σ = 3–12)
-   - Brightness shifts (underexposure × 0.15–0.45, overexposure +80–160)
-   - Gaussian noise (σ = 15–55)
-   - JPEG compression (quality 1–15)
-   - Combined degradations (DEFECTIVE class)
+4. **Training Data**: Real-Anchor Programmatic Extension Strategy
+   - **Foundation Anchors:** 30 high-fidelity, real-world camera exposures sourced from **Picsum Photos** to inject complex scene textures, varying ambient illumination, and authentic sensor baseline variations.
+   - **Synthetic Degradations:** Systematic extensions applied per anchor to form a balanced **210-image database** mapping physical camera pipeline defect distributions (modeled after academic TID2013 benchmarks).
+   - **Augmentations:** Gaussian blur, low/high luminance exposure clipping, additive sensor noise ($\sigma = 15-55$), and quantized JPEG macroblock degradation matrices.
 
-5. **Explainability**: Sliding-window saliency map — each 128×128 patch is independently scored; activation overlaid as JET colormap. Feature values returned in API response.
+5. **Explainability**:
+   - **Dynamic Feature Influence:** Final classifier predictions append model feature importance weights and plain-English structural reasons.
+   - **Saliency Maps:** A sliding-window quality activation map iterates over 128×128 pixel patches and overlays a Jet colormap displaying localized degradation severity.
 
 ### Model Inference Pipeline
 
@@ -230,7 +239,12 @@ curl -X POST http://localhost:8000/api/analyze \
   },
   "heatmap_url": "/api/analysis/550e8400.../heatmap",
   "analyzed_at": "2026-08-28T12:00:00Z",
-  "processing_time_ms": 234.5
+  "processing_time_ms": 234.5,
+  "explainability_insights": {
+    "primary_decision_driver": "laplacian_variance",
+    "feature_influence_weight": 0.1457,
+    "structural_reasoning": "Edge sharpness and pixel high-frequency variances dominated the decision boundary evaluation."
+  }
 }
 ```
 

@@ -1,41 +1,41 @@
-Accuracy: 0.8562
-CV F1-macro: 0.8961 ± 0.0235
+Accuracy: 0.9524
+CV F1-macro: 0.9336 ± 0.0380
 
               precision    recall  f1-score   support
 
-   DEFECTIVE       0.84      0.61      0.71        80
-    DEGRADED       0.84      0.95      0.89       200
-        GOOD       1.00      0.85      0.92        40
+   DEFECTIVE       1.00      0.92      0.96        12
+    DEGRADED       0.96      1.00      0.98        24
+        GOOD       0.83      0.83      0.83         6
 
-    accuracy                           0.86       320
-   macro avg       0.89      0.81      0.84       320
-weighted avg       0.86      0.86      0.85       320
+    accuracy                           0.95        42
+   macro avg       0.93      0.92      0.92        42
+weighted avg       0.95      0.95      0.95        42
 
 Confusion Matrix:
-[[ 49  31   0]
- [  9 191   0]
- [  0   6  34]]
+[[11  0  1]
+ [ 0 24  0]
+ [ 0  1  5]]
 
 Feature Importances:
-  colorfulness              0.0802
-  sobel_mean                0.0668
-  glcm_correlation          0.0625
-  laplacian_var             0.0624
-  tenengrad                 0.0615
-  jpeg_artifact_score       0.0614
-  brightness_mean           0.0531
-  sobel_std                 0.0521
-  snr_db                    0.0466
-  sat_std                   0.0463
-  sharpness                 0.0453
-  glcm_homogeneity          0.0444
-  noise_estimate            0.0420
-  michelson_contrast        0.0400
-  rms_contrast              0.0369
-  glcm_energy               0.0366
-  overexp_ratio             0.0325
-  hist_entropy              0.0307
-  brightness_std            0.0301
-  sat_mean                  0.0292
-  blocking_score            0.0239
-  underexp_ratio            0.0153
+  jpeg_artifact_score       0.1457
+  blocking_score            0.1383
+  hist_entropy              0.1124
+  sobel_std                 0.0704
+  laplacian_var             0.0587
+  michelson_contrast        0.0532
+  sharpness                 0.0528
+  glcm_energy               0.0522
+  tenengrad                 0.0402
+  noise_estimate            0.0343
+  glcm_homogeneity          0.0340
+  brightness_mean           0.0334
+  snr_db                    0.0315
+  sobel_mean                0.0297
+  underexp_ratio            0.0251
+  rms_contrast              0.0215
+  overexp_ratio             0.0183
+  brightness_std            0.0162
+  sat_mean                  0.0090
+  glcm_correlation          0.0088
+  sat_std                   0.0077
+  colorfulness              0.0067

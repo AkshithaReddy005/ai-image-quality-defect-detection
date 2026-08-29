@@ -52,6 +52,12 @@ class ImageFeatures(BaseModel):
     aspect_ratio: float
 
 
+class ExplainabilityInsights(BaseModel):
+    primary_decision_driver: str
+    feature_influence_weight: float
+    structural_reasoning: str
+
+
 class AnalysisResult(BaseModel):
     id: str
     filename: str
@@ -63,6 +69,7 @@ class AnalysisResult(BaseModel):
     heatmap_url: Optional[str] = None
     analyzed_at: datetime
     processing_time_ms: float
+    explainability_insights: Optional[ExplainabilityInsights] = None
 
 
 class AnalysisSummary(BaseModel):

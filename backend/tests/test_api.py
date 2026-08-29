@@ -30,6 +30,10 @@ def _make_png() -> bytes:
 
 @pytest.fixture
 async def client():
+    from app.db.database import init_db
+    from app.services.model_inference import load_models
+    await init_db()
+    load_models()
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as c:
@@ -63,6 +67,8 @@ async def test_analyze_valid_jpeg(client):
     assert "quality_label" in data
     assert "issues" in data
     assert "features" in data
+    assert "explainability_insights" in data
+    assert "primary_decision_driver" in data["explainability_insights"]
     assert 0 <= data["quality_score"] <= 100
     assert data["quality_label"] in {"GOOD", "ACCEPTABLE", "DEGRADED", "DEFECTIVE"}
 
@@ -92,7 +98,8 @@ async def test_analyze_corrupt_image(client):
         "/api/analyze",
         files={"file": ("bad.jpg", io.BytesIO(b"not an image"), "image/jpeg")},
     )
-    assert resp.status_code == 422
+    # Magic bytes check rejects this with a 400 Bad Request
+    assert resp.status_code == 400
 
 
 @pytest.mark.asyncio

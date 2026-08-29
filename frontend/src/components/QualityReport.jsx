@@ -87,6 +87,48 @@ export default function QualityReport({ result, imagePreviewUrl, onReset }) {
         )}
       </div>
 
+      {/* Explainability insights */}
+      {result.explainability_insights && (
+        <div className="explainability-insights fade-up fade-up-2" style={{
+          background: 'rgba(255, 255, 255, 0.02)',
+          border: '1px solid var(--border)',
+          borderRadius: '12px',
+          padding: '20px',
+          marginTop: '24px',
+          marginBottom: '24px'
+        }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 18 }}>🧠</span> ML Explainability & Decision Reasoning
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--text-500)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+                Primary Decision Driver
+              </div>
+              <code style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600, background: 'rgba(var(--accent-rgb, 99, 102, 241), 0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                {result.explainability_insights.primary_decision_driver}
+              </code>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--text-500)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+                Feature Influence Weight
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-100)' }}>
+                {(result.explainability_insights.feature_influence_weight * 100).toFixed(2)}%
+              </div>
+            </div>
+            <div style={{ gridColumn: 'span 2' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-500)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+                Structural Reasoning
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-300)', lineHeight: 1.5 }}>
+                {result.explainability_insights.structural_reasoning}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Heatmap */}
       <HeatmapViewer analysisId={id} originalSrc={imagePreviewUrl} />
 

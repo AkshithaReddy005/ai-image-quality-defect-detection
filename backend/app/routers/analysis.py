@@ -47,6 +47,22 @@ def _validate_file(file: UploadFile) -> None:
 
 
 async def _read_file(file: UploadFile) -> bytes:
+    # Read the start of the stream to extract magic bytes (up to 2048 bytes)
+    header_bytes = await file.read(2048)
+    
+    # Reset file pointer so we can read it completely from the beginning
+    await file.seek(0)
+    
+    # Explicit Magic Byte Checking
+    is_jpeg = header_bytes.startswith(b'\xff\xd8\xff')
+    is_png = header_bytes.startswith(b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a')
+    
+    if not (is_jpeg or is_png):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File structure tampered or corrupt. Core binary payload does not match JPEG/PNG magic signatures.",
+        )
+        
     data = await file.read()
     if len(data) > MAX_FILE_BYTES:
         raise HTTPException(
@@ -99,14 +115,20 @@ def _build_record(
         features=fv.to_dict(),
         heatmap_path=heatmap_path,
         processing_time_ms=elapsed_ms,
+        explainability_insights=result.get("explainability_insights"),
     )
 
 
 def _record_to_result(record: AnalysisRecord) -> AnalysisResult:
-    from app.models.schemas import IssueDetail, ImageFeatures
+    from app.models.schemas import IssueDetail, ImageFeatures, ExplainabilityInsights
     issues = [IssueDetail(**i) for i in (record.issues or [])]
     feats  = ImageFeatures(**record.features)
     heatmap_url = f"/api/analysis/{record.id}/heatmap" if record.heatmap_path else None
+    
+    exp_insights = None
+    if record.explainability_insights:
+        exp_insights = ExplainabilityInsights(**record.explainability_insights)
+        
     return AnalysisResult(
         id=record.id,
         filename=record.filename,
@@ -118,6 +140,7 @@ def _record_to_result(record: AnalysisRecord) -> AnalysisResult:
         heatmap_url=heatmap_url,
         analyzed_at=record.analyzed_at,
         processing_time_ms=record.processing_time_ms or 0.0,
+        explainability_insights=exp_insights,
     )
 
 

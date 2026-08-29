@@ -20,3 +20,4 @@ class AnalysisRecord(Base):
     heatmap_path = Column(String(512), nullable=True)
     analyzed_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     processing_time_ms = Column(Float, nullable=True)
+    explainability_insights = Column(JSON, nullable=True)

@@ -191,16 +191,32 @@ def _label_from_score(score: float) -> str:
         return "DEFECTIVE"
 
 
+FEATURE_NAMES = [
+    "laplacian_variance", "sobel_mean", "sobel_std", "tenengrad_score", "sharpness_score",
+    "brightness_mean", "brightness_std", "underexposed_ratio", "overexposed_ratio", "histogram_entropy",
+    "noise_estimate", "snr_db", "rms_contrast", "michelson_contrast",
+    "saturation_mean", "saturation_std", "colorfulness_index",
+    "glcm_energy", "glcm_homogeneity", "glcm_correlation",
+    "jpeg_artifact_score", "blocking_score",
+]
+
+
 def run_inference(fv: FeatureVector) -> dict:
     """
     Run the full inference pipeline on a FeatureVector.
-    Returns a dict with quality_score, quality_label, issues, and rf_proba.
+    Returns a dict with quality_score, quality_label, issues, rf_label, rf_proba, and explainability_insights.
     """
     issues = _detect_issues(fv)
-
     rf_confidence = 0.5
     rf_label      = "UNKNOWN"
     rf_proba_dict = {}
+    
+    # Heuristic fallback for explainability
+    explainability_insights = {
+        "primary_decision_driver": "laplacian_variance",
+        "feature_influence_weight": 0.08,
+        "structural_reasoning": "Rule-based sharpness fallback used: image sharpness is evaluated via spatial derivative boundaries."
+    }
 
     if _models_ready and _rf_model is not None:
         try:
@@ -220,6 +236,27 @@ def run_inference(fv: FeatureVector) -> dict:
             good_classes = {"GOOD", "good", 0}
             good_proba = sum(p for c, p in zip(classes, proba) if c in good_classes or str(c) == "GOOD")
             rf_confidence = float(good_proba)
+            
+            # Dynamic Feature Importance
+            importances = _rf_model.feature_importances_
+            best_feature_idx = int(np.argmax(importances))
+            top_feature_name = FEATURE_NAMES[best_feature_idx]
+            top_feature_weight = float(importances[best_feature_idx])
+            
+            if top_feature_name == "colorfulness_index":
+                reasoning = "Color saturation and richness were highly prioritized during analysis tree branching."
+            elif "sharpness" in top_feature_name or "laplacian" in top_feature_name or "sobel" in top_feature_name or "tenengrad" in top_feature_name:
+                reasoning = "Edge sharpness and pixel high-frequency variances dominated the decision boundary evaluation."
+            elif "jpeg" in top_feature_name or "blocking" in top_feature_name:
+                reasoning = "Compression artifacts and block boundary discontinuities were the primary signal indicator."
+            else:
+                reasoning = f"The feature '{top_feature_name}' had the highest mathematical influence on the forest classifier split."
+                
+            explainability_insights = {
+                "primary_decision_driver": top_feature_name,
+                "feature_influence_weight": round(top_feature_weight, 4),
+                "structural_reasoning": reasoning
+            }
         except Exception as e:
             logger.warning(f"RF inference failed, using rule-based only: {e}")
 
@@ -232,4 +269,5 @@ def run_inference(fv: FeatureVector) -> dict:
         "issues": issues,
         "rf_label": rf_label,
         "rf_proba": rf_proba_dict,
+        "explainability_insights": explainability_insights,
     }

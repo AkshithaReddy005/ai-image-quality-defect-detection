@@ -294,15 +294,23 @@ def extract_features(img_bgr: np.ndarray) -> FeatureVector:
     Given a BGR image array (as loaded by cv2.imread), compute the full
     feature vector.
     """
+    h_orig, w_orig = img_bgr.shape[:2]
+    
+    # 💥 DEFENSE LAYER: Prevent OOM by scaling back excessive sizes
+    MAX_DIMENSION = 1920
+    if max(h_orig, w_orig) > MAX_DIMENSION:
+        scale = MAX_DIMENSION / float(max(h_orig, w_orig))
+        img_bgr = cv2.resize(img_bgr, (int(w_orig * scale), int(h_orig * scale)), interpolation=cv2.INTER_AREA)
+
     gray = _to_gray(img_bgr)
     h, w = gray.shape
     channels = img_bgr.shape[2] if img_bgr.ndim == 3 else 1
 
     fv = FeatureVector()
-    fv.width      = w
-    fv.height     = h
+    fv.width      = w_orig
+    fv.height     = h_orig
     fv.channels   = channels
-    fv.aspect_ratio = float(w / (h + 1e-9))
+    fv.aspect_ratio = float(w_orig / (h_orig + 1e-9))
 
     fv.__dict__.update(_sharpness_features(gray))
     fv.__dict__.update(_exposure_features(gray))

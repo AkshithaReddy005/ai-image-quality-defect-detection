@@ -40,20 +40,21 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(mes
 logger = logging.getLogger(__name__)
 
 DATASET_DIR = Path("data/synthetic_dataset")
-IMAGES_DIR  = DATASET_DIR / "images"
-LABELS_FILE = DATASET_DIR / "labels.csv"
 MODEL_DIR   = Path("ml/models")
 
 
-def load_dataset() -> tuple[np.ndarray, np.ndarray]:
+def load_dataset(dataset_dir: Path) -> tuple[np.ndarray, np.ndarray]:
     """Load images and extract features. Returns (X, y)."""
-    if not LABELS_FILE.exists():
+    images_dir  = dataset_dir / "images"
+    labels_file = dataset_dir / "labels.csv"
+
+    if not labels_file.exists():
         raise FileNotFoundError(
-            f"Dataset not found at {LABELS_FILE}. "
-            "Run `python ml/generate_dataset.py` first."
+            f"Dataset labels not found at {labels_file}. "
+            "Please ensure the directory contains 'labels.csv' and an 'images/' folder."
         )
 
-    with LABELS_FILE.open() as f:
+    with labels_file.open() as f:
         reader = csv.DictReader(f)
         rows = list(reader)
 
@@ -61,7 +62,7 @@ def load_dataset() -> tuple[np.ndarray, np.ndarray]:
     n_failed = 0
 
     for i, row in enumerate(rows):
-        fpath = IMAGES_DIR / row["filename"]
+        fpath = images_dir / row["filename"]
         if not fpath.exists():
             n_failed += 1
             continue
@@ -89,15 +90,18 @@ def load_dataset() -> tuple[np.ndarray, np.ndarray]:
     return X, y
 
 
-def train(force_regen: bool = False, n_seeds: int = 200) -> None:
-    # Optionally regenerate dataset
-    if force_regen or not LABELS_FILE.exists():
-        logger.info("Generating synthetic dataset...")
+def train(dataset_dir: Path, force_regen: bool = False, n_seeds: int = 200) -> None:
+    # If using default synthetic dataset and it doesn't exist, generate it
+    is_default = (dataset_dir == DATASET_DIR)
+    labels_file = dataset_dir / "labels.csv"
+
+    if is_default and (force_regen or not labels_file.exists()):
+        logger.info("Generating default synthetic dataset...")
         from ml.generate_dataset import generate_dataset
         generate_dataset(n_seeds=n_seeds)
 
-    logger.info("Loading dataset and extracting features...")
-    X, y = load_dataset()
+    logger.info(f"Loading dataset from {dataset_dir} and extracting features...")
+    X, y = load_dataset(dataset_dir)
 
     # Encode labels
     le = LabelEncoder()
@@ -177,7 +181,8 @@ def train(force_regen: bool = False, n_seeds: int = 200) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train image quality classifier")
-    parser.add_argument("--force-regen", action="store_true", help="Regenerate dataset before training")
-    parser.add_argument("--seeds", type=int, default=200, help="Number of seed images for generation")
+    parser.add_argument("--dataset-dir", type=str, default=str(DATASET_DIR), help="Path to custom dataset directory containing 'images/' and 'labels.csv'")
+    parser.add_argument("--force-regen", action="store_true", help="Regenerate default synthetic dataset before training")
+    parser.add_argument("--seeds", type=int, default=200, help="Number of seed images for generation (only if using synthetic dataset)")
     args = parser.parse_args()
-    train(force_regen=args.force_regen, n_seeds=args.seeds)
+    train(dataset_dir=Path(args.dataset_dir), force_regen=args.force_regen, n_seeds=args.seeds)
